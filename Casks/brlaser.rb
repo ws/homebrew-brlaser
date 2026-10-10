@@ -1,3 +1,6 @@
+# typed: strict
+# frozen_string_literal: true
+
 cask "brlaser" do
   version "6"
   sha256 :no_check
@@ -9,50 +12,44 @@ cask "brlaser" do
 
   depends_on formula: "cmake"
 
-  preflight do
-    system_command "/opt/homebrew/bin/cmake",
-                   args: [
-                     "-S", "#{staged_path}/homebrew-brlaser-master",
-                     "-B", "#{staged_path}/build",
-                     "-DCMAKE_BUILD_TYPE=Release"
-                   ]
-    system_command "/opt/homebrew/bin/cmake",
-                   args: ["--build", "#{staged_path}/build"]
+  preflight_steps do
+    run "/opt/homebrew/bin/cmake",
+        args: [
+          "-S", "{{staged_path}}/homebrew-brlaser-master",
+          "-B", "{{staged_path}}/build",
+          "-DCMAKE_BUILD_TYPE=Release"
+        ]
+    run "/opt/homebrew/bin/cmake",
+        args: ["--build", "{{staged_path}}/build"]
   end
 
-  postflight do
-    system_command "/opt/homebrew/bin/cmake",
-                   args: ["--install", "#{staged_path}/build"],
-                   sudo: true
+  postflight_steps do
+    run "/opt/homebrew/bin/cmake",
+        args: ["--install", "{{staged_path}}/build"],
+        sudo: true
 
-    system_command "/bin/launchctl",
-                   args: ["stop", "org.cups.cupsd"],
-                   sudo: true
-    system_command "/bin/launchctl",
-                   args: ["start", "org.cups.cupsd"],
-                   sudo: true
+    run "/bin/launchctl",
+        args: ["stop", "org.cups.cupsd"],
+        sudo: true
+    run "/bin/launchctl",
+        args: ["start", "org.cups.cupsd"],
+        sudo: true
   end
 
-  uninstall_preflight do
-    system_command "/bin/rm",
-                   args: ["-f", "/usr/libexec/cups/filter/rastertobrlaser"],
-                   sudo: true
-    system_command "/bin/rm",
-                   args: ["-f", "/Library/Printers/PPDs/Contents/Resources/brlaser.drv"],
-                   sudo: true
-    system_command "/bin/sh",
-                   args: ["-c", "rm -f /Library/Printers/PPDs/Contents/Resources/br*.ppd"],
-                   sudo: true
-    system_command "/bin/sh",
-                   args: ["-c", "rm -f /Library/Printers/PPDs/Contents/Resources/brl*.ppd"],
-                   sudo: true
+  uninstall_preflight_steps do
+    remove "/usr/libexec/cups/filter/rastertobrlaser",
+           "/Library/Printers/PPDs/Contents/Resources/brlaser.drv",
+           "/Library/Printers/PPDs/Contents/Resources/br*.ppd",
+           "/Library/Printers/PPDs/Contents/Resources/brl*.ppd",
+           recursive: true,
+           sudo:      true
 
-    system_command "/bin/launchctl",
-                   args: ["stop", "org.cups.cupsd"],
-                   sudo: true
-    system_command "/bin/launchctl",
-                   args: ["start", "org.cups.cupsd"],
-                   sudo: true
+    run "/bin/launchctl",
+        args: ["stop", "org.cups.cupsd"],
+        sudo: true
+    run "/bin/launchctl",
+        args: ["start", "org.cups.cupsd"],
+        sudo: true
   end
 
   caveats <<~EOS
